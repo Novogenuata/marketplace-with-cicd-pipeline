@@ -1,0 +1,17 @@
+{
+  "source": {
+    "include": ["client/cart/Checkout.js",  "server/models"],
+    "includePattern": ".+\\.js$",
+    "excludePattern": "(node_modules/|dist|build)"
+  },
+  "plugins": ["node_modules/jsdoc-babel"],
+  "babel": {
+    "extensions": ["js"],
+    "ignore": ["node_modules"]
+  },
+  "opts": {
+    "destination": "./docs",
+    "recurse": true,
+    "template": "node_modules/jsdoc/templates/default"
+  }
+}

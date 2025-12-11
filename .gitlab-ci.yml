@@ -1,0 +1,120 @@
+stages:
+  - install
+
+  - lint
+  - document
+  - test
+  - build
+  - deploy
+
+
+install_dependencies:
+  stage: install
+  image: node:18
+  script:
+    - cd mern-marketplace
+    - npm ci
+  cache:
+    key: node-modules
+    paths:
+      - mern-marketplace/node_modules/
+    policy: pull-push
+
+lint:
+  stage: lint
+  image: node:18
+  dependencies:
+    - install_dependencies
+  cache:
+    key: node-modules
+    paths:
+      - mern-marketplace/node_modules/
+    policy: pull
+  script:
+    - cd mern-marketplace
+    - npx eslint .
+
+generate_docs:
+  stage: document
+  image: node:18
+  dependencies:
+    - install_dependencies
+  cache:
+    key: node-modules
+    paths:
+      - mern-marketplace/node_modules/
+    policy: pull
+  script:
+    - cd mern-marketplace
+    - npx jsdoc -c jsdoc.json
+  artifacts:
+    paths:
+      - mern-marketplace/docs/
+
+test:
+  stage: test
+  image: node:18
+  dependencies:
+    - install_dependencies
+  cache:
+    key: node-modules
+    paths:
+      - mern-marketplace/node_modules/
+    policy: pull
+  script:
+    - cd mern-marketplace
+    - JEST_JUNIT_OUTPUT=./junit.xml npx jest --ci --reporters=default --reporters=jest-junit
+  artifacts:
+    when: always
+    reports:
+      junit: mern-marketplace/junit.xml
+    paths:
+      - mern-marketplace/junit.xml
+
+build:
+  stage: build
+  image: node:18
+  dependencies:
+    - install_dependencies
+  cache:
+    key: node-modules
+    paths:
+      - mern-marketplace/node_modules/
+    policy: pull
+  script:
+      - cd mern-marketplace
+      - npx cross-env NODE_OPTIONS=--openssl-legacy-provider node ./node_modules/webpack/bin/webpack.js --config webpack.config.client.cjs
+      - npx cross-env NODE_OPTIONS=--openssl-legacy-provider node ./node_modules/webpack/bin/webpack.js --config webpack.config.client.production.cjs
+      - npx cross-env NODE_OPTIONS=--openssl-legacy-provider node ./node_modules/webpack/bin/webpack.js --config webpack.config.server.cjs
+
+  artifacts:
+    paths:
+      - mern-marketplace/dist/
+#
+deploy:
+  stage: deploy
+  image: python:3.11            
+
+  dependencies:
+    - install_dependencies
+
+  cache:
+    key: node-modules
+    paths:
+      - mern-marketplace/node_modules/
+    policy: pull
+
+  before_script:
+    - apt-get update && apt-get install -y zip unzip curl
+    - curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+    - apt-get install -y nodejs
+    - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    - unzip awscliv2.zip
+    - ./aws/install
+    - aws --version  
+  script:
+    - chmod +x ./mern-marketplace/bashscripts/deploy.sh
+    - ./mern-marketplace/bashscripts/deploy.sh
+
+  only:
+    - main
