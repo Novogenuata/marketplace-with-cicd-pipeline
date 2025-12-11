@@ -1,4 +1,4 @@
-# mern marktplace with ci/cd pipeline
+# Mern marketplace with ci/cd pipeline
 
 # original cloned from https://github.com/shamahoque/mern-marketplace/tree/master
 
